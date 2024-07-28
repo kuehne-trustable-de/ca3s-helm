@@ -1,0 +1,571 @@
+# Default values for ca3s-helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  registry: docker.io
+  repository: kuehnetrustablede/ca3s
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  ## @param ingress.enabled Enable ingress controller resource
+  ##
+  enabled: false
+  ## DEPRECATED: Use ingress.annotations instead of ingress.certManager
+  ## certManager: false
+  ##
+
+  ## @param ingress.pathType Ingress Path type
+  ##
+  pathType: ImplementationSpecific
+  ## @param ingress.apiVersion Override API Version (automatically detected if not set)
+  ##
+  apiVersion: ""
+  ## @param ingress.hostname Default host for the ingress resource
+  ##
+  hostname: ca3s.local
+  ## @param ingress.path The Path to ca3s. You may need to set this to '/*' in order to use this
+  ## with ALB ingress controllers.
+  ##
+  path: /
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations: {}
+  ## @param ingress.tls Enable TLS configuration for the hostname defined at ingress.hostname parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
+  ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+  ##
+  tls: false
+  ## @param ingress.extraHosts The list of additional hostnames to be covered with this ingress record.
+  ## Most likely the hostname above will be enough, but in the event more hosts are needed, this is an array
+  ## extraHosts:
+  ## - name: ca3s.local
+  ##   path: /
+  extraHosts: []
+  ## @param ingress.extraPaths Any additional arbitrary paths that may need to be added to the ingress under the main host.
+  ## For example: The ALB ingress controller requires a special rule for handling SSL redirection.
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     serviceName: ssl-redirect
+  ##     servicePort: use-annotation
+  extraPaths: []
+  ## @param ingress.extraTls The tls configuration for additional hostnames to be covered with this ingress record.
+  ## see: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  ## extraTls:
+  ## - hosts:
+  ##     - ca3s.local
+  ##   secretName: ca3s.local-tls
+  extraTls: []
+  ## @param ingress.secrets If you're providing your own certificates, please use this to add the certificates as secrets
+  ## key and certificate should start with -----BEGIN CERTIFICATE----- or
+  ## -----BEGIN RSA PRIVATE KEY-----
+  ##
+  ## name should line up with a tlsSecret set further up
+  ## If you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set
+  ##
+  ## It is also possible to create and manage the certificates outside of this helm chart
+  ## Please see README.md for more information
+  ## Example:
+  ## - name: ca3s.local-tls
+  ##   key:
+  ##   certificate:
+  ##
+  secrets: []
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: ""
+  ## @param ingress.extraRules Additional rules to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-rules
+  ## e.g:
+  ## extraRules:
+  ## - host: example.local
+  ##     http:
+  ##       path: /
+  ##       backend:
+  ##         service:
+  ##           name: example-svc
+  ##           port:
+  ##             name: http
+  ##
+  extraRules: []
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 1
+  #   memory: 1Gi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+properties:
+  LOGBACK_ACCESS_ENABLED: "false"
+
+  # define the logging level
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_IO.GITHUB.JHIPSTER: "INFO"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE: "INFO"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.PROPERTIESLOGGER: "INFO"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SCHEDULE.REQUESTPROXYSCHEDULER: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.NOTIFICATIONSERVICE: "DEBUG"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.MAILSERVICE: "DEBUG"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.UTIL.CACONNECTORADAPTER: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.ADCS: "INFO"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.CMP: "INFO"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SERVICE.DIR: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.SECURITY.PROVIDER.CA3STRUSTMANAGER: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.REPOSITORY.CSRSPECIFICATIONS: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.REPOSITORY.CERTIFICATESPECIFICATIONS: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CA3S.CORE.WEB.REST.SUPPORT.UIDATASETSUPPORT: "DEBUG"
+  LOGGING_LEVEL_DE.TRUSTABLE.UTIL.CRYPTOUTIL: "WARN"
+  LOGGING_LEVEL_DE.TRUSTABLE.CMP.CLIENT.CMPCLIENT.CMPCLIENTIMPL: "DEBUG"
+  LOGGING_LEVEL_ORG.KEYCLOAK.ADAPTERS: "WARN"
+  LOGGING_LEVEL_ORG.SPRINGFRAMEWORK.SECURITY.WEB.AUTHENTICATION: "WARN"
+  LOGGING_LEVEL_ORG.SPRINGFRAMEWORK.SECURITY: "INFO"
+  LOGGING_LEVEL_NET.TTDDYY.DSPROXY.LISTENER: "INFO"
+  LOGGING_LEVEL_ORG.SPRINGFRAMEWORK.WEB.FILTER.COMMONSREQUESTLOGGINGFILTER: "WARN"
+  LOGGING_LEVEL_ORG.HIBERNATE.SQL_SLOW: "INFO"
+  MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "false"
+
+  # properties defined by Spring
+  SPRING_DEVTOOLS_RESTART_ENABLED: "false"
+  SPRING_DEVTOOLS_LIVERELOAD_ENABLED: "false"
+
+  # database connection details
+  SPRING_DATASOURCE_TYPE: "com.zaxxer.hikari.HikariDataSource"
+#  SPRING_DATASOURCE_URL: "jdbc:mysql://10.0.1.1:3306/test_schema?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://ca3s-bn-mariadb.default.svc.cluster.local:3306/ca3s_db?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+  SPRING_DATASOURCE_USERNAME: "ca3s_user"
+  SPRING_DATASOURCE_PASSWORD: "s3cr3t"
+  SPRING_DATASOURCE_HIKARI_POOLNAME: "Hikari"
+  SPRING_DATASOURCE_HIKARI_AUTO-COMMIT: "false"
+  SPRING_DATASOURCE_HIKARI_DATA-SOURCE-PROPERTIES_CACHEPREPSTMTS: "true"
+  SPRING_DATASOURCE_HIKARI_DATA-SOURCE-PROPERTIES_PREPSTMTCACHESIZE: "250"
+  SPRING_DATASOURCE_HIKARI_DATA-SOURCE-PROPERTIES_PREPSTMTCACHESQLLIMIT: "2048"
+  SPRING_DATASOURCE_HIKARI_DATA-SOURCE-PROPERTIES_USESERVERPREPSTMTS: "true"
+  SPRING_JPA_DATABASE-PLATFORM: "org.hibernate.dialect.MySQL5InnoDBDialect"
+  SPRING_JPA_DATABASE: "MYSQL"
+  SPRING_JPA_SHOW-SQL: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_ID_NEW_GENERATOR_MAPPINGS: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_CONNECTION_PROVIDER_DISABLES_AUTOCOMMIT: "true"
+  SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_QUERY_CACHE: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_SESSION_EVENTS_LOG_LOG_QUERIES_SLOWER_THAN_MS: "250"
+  SPRING_LIQUIBASE_CONTEXTS: "prod"
+  SPRING_LIQUIBASE_USER: "ca3s_lb_user"
+  SPRING_LIQUIBASE_PASSWORD: "MLQ738PdLpio"
+  SPRING_MVC_PATHMATCH_MATCHING-STRATEGY: "ant_path_matcher"
+  SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
+  SPRING_MAIN_ALLOW-CIRCULAR-REFERENCES: "true"
+  SPRING_MAIL_HOST: "localhost"
+  SPRING_MAIL_PORT: "25"
+  SPRING_MESSAGES_BASENAME: "i18n/messages"
+  SPRING_THYMELEAF_CACHE: "true"
+  SERVER_PORT: "8080"
+  SERVER_COMPRESSION_ENABLED: "true"
+  SERVER_COMPRESSION_MIME-TYPES: "text/html,text/xml,text/plain,text/css, application/javascript, application/json"
+  SERVER_COMPRESSION_MIN-RESPONSE-SIZE: "1024"
+  SERVER_MAX-HTTP-HEADER-SIZE: "8KB"
+
+  # properties defined by jHipster
+  # Full reference is available at: https://www.jhipster.tech/common-application-properties/
+  JHIPSTER_HTTP_CACHE_TIMETOLIVEINDAYS: "1461"
+  JHIPSTER_CACHE_EHCACHE_TIME-TO-LIVE-SECONDS: "3600"
+  JHIPSTER_CACHE_EHCACHE_MAX-ENTRIES: "1000"
+
+  # The web session uses JSON Web Token for authentication. Define the protection parameter here
+  JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64-SECRET: "Mjk3NjM4OWI4NWU3ZjE3NjQ3OWRiZjI3OWYwYmZiNWY1NzA2YjAzZTY2ODJhNWM5MjFjYzZmZTZlMDE4YWRhNDg0MjJlNDYzNThhODBjNmU0ZGFjMGY3MTc5OTVlNmEyZWFiZmIwMDIxYTExYzkxNGM3YmM2YmVmMmNlZWE2YmQ="
+  JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN-VALIDITY-IN-SECONDS: "86400"
+  JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN-VALIDITY-IN-SECONDS-FOR-REMEMBER-ME: "2592000"
+
+  # Provide environment settings for email templates
+  JHIPSTER_MAIL_BASE-URL: "http://localhost:8080"
+  JHIPSTER_MAIL_FROM: "ca3s@localhost"
+  JHIPSTER_LOGGING_USE-JSON-FORMAT: "false"
+  JHIPSTER_LOGGING_LOGSTASH_ENABLED: "false"
+  JHIPSTER_LOGGING_LOGSTASH_HOST: "localhost"
+  JHIPSTER_LOGGING_LOGSTASH_PORT: "5000"
+  JHIPSTER_LOGGING_LOGSTASH_QUEUE-SIZE: "512"
+  JHIPSTER_AUDIT-EVENTS_RETENTION-PERIOD: "30"
+
+  # Configure the settings for OAS (aka Swagger)
+  SPRINGDOC_PACKAGESTOSCAN: "de.trustable.ca3s.core.web.rest"
+  SPRINGDOC_PATHSTOMATCH: "/v1, /api/**"
+
+  # Configure the settings related to the Camunda process engine
+  CAMUNDA_BPM_JOB-EXECUTION_ENABLED: "true"
+
+  # Configure the ca3s specific settings
+  # Enable the default BPMN process. This has performance drawbacks but offers the services of the camunda engine, e.g. parameter tracking
+  CA3S_BPMN_USE-DEFAULT-PROCESS: "false"
+  # Drop the BPMN data after a given period. Processes may have blob objects (e.g. CSRs and certificates) that may bloat the database.
+  CA3S_HISTORICPROCESS_RETENTION_DAYS: "180"
+  CA3S_ISSUANCE_RA_SELF-ISSUANCE-ALLOWED: "false"
+  CA3S_BATCH_MAXRECORDSPERTRANSACTION: "1000"
+  CA3S_SCHEDULE_RATE_CACONNECTORSTATUS: "600000"
+  CA3S_SCHEDULE_RATE_PROTECTEDCONTENTCLEANUP: "3600000"
+  CA3S_SCHEDULE_RATE_ACMEORDEREXPIRY: "3600000"
+  CA3S_SCHEDULE_RATE_CERTBUNDLECHECK: "600000"
+  CA3S_SCHEDULE_RATE_CERTRETRIEVAL: "3600000"
+  CA3S_SCHEDULE_RATE_REVOCATIONCHECK: "3600000"
+  CA3S_SCHEDULE_CRON_EXPIRYNOTIFICATIONCRON: "0 15 2 * * ?"
+  CA3S_SCHEDULE_CRON_DROPUNRELATEDUSERSCRON: "0 20 02 * * ?"
+  CA3S_SCHEDULE_CRON_DROPHISTORICPROCESSESCRON: "0 22 22 * * ?"
+  CA3S_SCHEDULE_RA-OFFICER-NOTIFICATION_DAYS-BEFORE-EXPIRY_EE: "30"
+  CA3S_SCHEDULE_RA-OFFICER-NOTIFICATION_DAYS-BEFORE-EXPIRY_CA: "90"
+  CA3S_SCHEDULE_RA-OFFICER-NOTIFICATION_DAYS-PENDING: "30"
+  CA3S_SCHEDULE_REQUESTOR_NOTIFICATION_DAYS: "30,14,7"
+  CA3S_SCHEDULE_REQUESTOR_NOTIFICATION_ATTRIBUTES: "adcs manager"
+  CA3S_SCHEDULE_REQUESTOR_NOTIFICATION_USER-ONLY: "false"
+  CA3S_PKCS12_SECRET_DESCRIPTION: "min6NumberUpperLower"
+  CA3S_PKCS12_SECRET_REGEXP: "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{6,100}$"
+  CA3S_PKCS12_PBE_ALGOS: "PBEWithHmacSHA256AndAES_256, pbeWithSHAAnd3_KeyTripleDES_CBC"
+  CA3S_UI_CERTIFICATE-STORE_ISOLATION: "none"
+  CA3S_UI_DOWNLOAD_ROWS_MAX: "65535"
+  CA3S_UI_DOWNLOAD_PKCS12_LOG_DOWNLOAD: "true"
+  CA3S_UI_PASSWORD_CHECK_DESCRIPTION: "min8NumberUpperLowerSpecial"
+  CA3S_UI_PASSWORD_CHECK_REGEXP: "^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_=?*+#.”&§%°()\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$"
+  CA3S_UI_CSR_DNSLOOKUP: "true"
+  CA3S_UI_SSO_AUTOLOGIN: "false"
+  CA3S_UI_SSO_PROVIDER: "saml"
+
+  # Configure service to port / protocol binding.
+  # The default port is 8442
+  # The default binding host is 0.0.0.0
+  # The use of https is default
+  # Overwrite any of the settings if required
+
+  # Define the SCEP access port and the protocol. Older clients may support HTTP, only
+  CA3S_SCEPACCESS_PORT: "8080"
+  CA3S_SCEPACCESS_HTTPS: "false"
+
+  # Define the ACME access port. HTTPS is mandatory by RFC 8555
+  CA3S_ACMEACCESS_PORT: "8442"
+
+  # Define the access port for 'normal' user'. HTTPS is strongly recommended
+  CA3S_TLSACCESS_PORT: "8442"
+
+  # Define the access port for ra officer. HTTPS is strongly recommended
+  CA3S_RAACCESS_PORT: "8442"
+
+  # Define the access port for administrator. HTTPS is strongly recommended. Probably admin access will be limited to a specific subnet
+  CA3S_ADMINACCESS_PORT: "8442"
+  CA3S_ADMINACCESS_BINDINGHOST: "192.168.32.0"
+  CA3S_ACME_FINALIZELOCATIONBACKWARDCOMPAT: "true"
+  CA3S_ACME_RATELIMIT_SECOND: "0"
+  CA3S_ACME_RATELIMIT_MINUTE: "20"
+  CA3S_ACME_RATELIMIT_HOUR: "0"
+
+  # expiry period for orders
+  CA3S_ACME_ORDER_VALIDITY_SECONDS: "600"
+
+  # determine the status of an Authentication or an Order by proving the status of the challenges. This may trigger a challenge validation call to the client
+  CA3S_ACME_ITERATE_AUTHENTICATIONS: "true"
+  CA3S_ACME_ITERATE_CHALLENGES: "true"
+
+  # define a specific DNS server to be used with ACME DNS challenges
+  CA3S_DNS_SERVER: "213.133.106.251"
+  CA3S_DNS_PORT: "53"
+
+  # ca3s requests its own certificate automatically. Define the details of the certificate
+  CA3S_HTTPS_CERTIFICATE_DNSUFFIX: "O=Trustable Solutions,OU=CA3S Instance,C=DE"
+  CA3S_HTTPS_CERTIFICATE_SANS: "ca3s-bn-ca3s-helm.default.svc.cluster.local"
+  CA3S_HTTPS_CERTIFICATE_PERSIST: "DB"
+
+  # ca3s requests the SCEP recipeint certificate automatically. Define the details of the certificate
+  CA3S_SCEP_RECIPIENT_CERTIFICATE_CNSUFFIX: ".trustable.de"
+
+  # provide a random password for the derivation of an encryption key to encrypt sensitive data in the database.
+  # If this value is lost the content of the related database instance becomes useless. There is no way to recover this key.
+  # !!! Make sure this configuration file is readable for the application / administrators ONLY !!!
+  CA3S_PROTECTIONSECRET: "bnJvbGwvV1MtMjAxOS1DQS5jcmyGK2h0dHA6Ly90cnVzdGFibGUuZXUvYWRjc1Rl"
+
+  # define some key derivation parameter wihich are applied to derive a key from the given protectionSecret
+  CA3S_CONNECTION_SALT: "ca3sSalt"
+  CA3S_CONNECTION_ITERATIONS: "4567"
+  CA3S_CONNECTION_PBEALGO: "PBKDF2WithHmacSHA256"
+
+  # SSO section
+
+  # Define a (default) API key to access the REST endpoints, especially during automatic setup
+  CA3S_AUTH_API-KEY_ENABLED: "true"
+  CA3S_AUTH_API-KEY_AUTH-TOKEN-HEADER-NAME: "X-API-KEY"
+  CA3S_AUTH_API-KEY_AUTH-TOKEN-ADMIN: "gTYvGKIfzLpWQSSIMT1XBaRfzdSLZmvFMNlfo6zeddYyg3FYmq7BH6qqB4dy75uYbLb0KXOU7jV50a360R4CB4UXriX085usWJnto5CMpOu34rxx0b5v2Xd97hpzDQdJ"
+
+  # Section for kerberos / AD authentication
+  CA3S_AUTH_KERBEROS_SERVICE-PRINCIPAL: "HTTP/admin@ci-adcs"
+  CA3S_AUTH_KERBEROS_KEYTAB-LOCATION: "ca3s.keytab"
+  CA3S_AUTH_AD-DOMAIN: "foo"
+
+  # Section regarding LDAP / AD access
+  CA3S_AUTH_LDAP_URL: "ldap://testLDAP.eu:123"
+  CA3S_AUTH_LDAP_BASEDN: "dc=testLDAP,dc=eu"
+  CA3S_AUTH_LDAP_SEARCH-BASE: "dc=testLDAP,dc=eu"
+  CA3S_AUTH_LDAP_SEARCH-FILTER: "dc=testLDAP,dc=eu"
+  CA3S_AUTH_LDAP_GROUP-SEARCH-BASE: "(| (userPrincipalName={0}) (sAMAccountName={0}))"
+  CA3S_AUTH_LDAP_PRINCIPAL: "cn=alice,ou=people,dc=testLDAP,dc=eu"
+  CA3S_AUTH_LDAP_PASSWORD: "s3cr3t"
+
+  # Section defining SAML server and token processing
+  CA3S_SAML_ACTIVATE: "true"
+  CA3S_SAML_IDP: "http://localhost:50080/realms/master"
+  CA3S_SAML_SP: "saml-client"
+  CA3S_SAML_ROLES_USER: "*"
+
+  # Define attributes providing basic identification data
+  CA3S_SAML_ATTRIBUTES_FIRSTNAME: "firstName"
+  CA3S_SAML_ATTRIBUTES_LASTNAME: "lastName"
+  CA3S_SAML_ATTRIBUTES_EMAIL: "email"
+
+  # Define SPEL expression building values from basic identification data
+  CA3S_SAML_EXPRESSION_TENANT: "get('user').get(0).substring(0,2).toUpperCase()"
+  CA3S_SAML_METADATA_LOCATION: "sample/saml/metadata/keycloak_saml.metadata.xml"
+  CA3S_SAML_METADATA_REQUIRES_SIGNATURE: "false"
+  CA3S_SAML_METADATA_TRUST_CHECK: "false"
+  CA3S_SAML_METADATA_TRUST_KEY_ALIASES: "trustedAlias1, trustedAlias2"
+  CA3S_SAML_KEYSTORE_LOCATION: "sample/saml/samlKeystore.p12"
+  CA3S_SAML_KEYSTORE_PASSWORD: "s3cr3t"
+  CA3S_SAML_KEYSTORE_ALIAS: "saml-client"
+
+  # Section defining OIDC server and JWT processing
+  CA3S_OIDC_ROLES_USER: "*"
+  CA3S_OIDC_ROLES_RA: "ROLE_RA"
+  CA3S_OIDC_CLIENT-ID: "oidc_client"
+  CA3S_OIDC_CLIENT-SECRET: "197bc3b4-64b0-452f-9bdb-fcaea0988e90"
+  CA3S_OIDC_SCOPE: "openid, profile"
+  CA3S_OIDC_AUTHORIZATION-GRANT-TYPE: "password"
+  CA3S_OIDC_AUTH-SERVER-URL: "http://keycloak.trustable.eu:50080"
+  CA3S_OIDC_REALM: "ca3s"
+  CA3S_OIDC_AUTHORIZATION-URI: "http://localhost:8080/auth/realms/ca3sRealm/protocol/openid-connect/auth"
+  CA3S_OIDC_USE-POST-LOGOUT-REDIRECT-URI: "true"
+
+mariadb:
+  ## @param mariadb.enabled Whether to deploy a mariadb server to satisfy the applications database requirements.
+  ## To use an external database set this to false and configure the externalDatabase parameters
+  ##
+  enabled: true
+  ## @param mariadb.architecture MariaDB architecture (`standalone` or `replication`)
+  ##
+  architecture: standalone
+  ## MariaDB Authentication parameters
+  ## @param mariadb.auth.rootPassword Password for the MariaDB `root` user
+  ## @param mariadb.auth.database Database name to create
+  ## @param mariadb.auth.username Database user to create
+  ## @param mariadb.auth.password Password for the database
+  ##
+  auth:
+    ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mariadb#setting-the-root-password-on-first-run
+    ##
+    rootPassword: "FooBarBaz1234"
+    ## ref: https://github.com/bitnami/containers/blob/main/bitnami/mariadb/README.md#creating-a-database-on-first-run
+    ##
+    database: ca3s_db
+    ## ref: https://github.com/bitnami/containers/blob/main/bitnami/mariadb/README.md#creating-a-database-user-on-first-run
+    ##
+    username: "ca3s_lb_user"
+    password: "MLQ738PdLpio"
+
+  ## @param initdbScripts Dictionary of initdb scripts
+  ## Specify dictionary of scripts to be run at first boot
+  ## Example:
+  ## initdbScripts:
+  ##   my_init_script.sh: |
+  ##      #!/bin/bash
+  ##      echo "Do something."
+  ##
+  initdbScripts:
+    1_create_lb_user.sql: |-
+      CREATE USER 'ca3s_user'@'%' IDENTIFIED BY 's3cr3t';
+    2_config_permissions_lb_user.sql: |-
+      GRANT ALL PRIVILEGES ON *.* TO 'ca3s_user'@'%';
+
+  primary:
+    ## Enable persistence using Persistent Volume Claims
+    ## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+    ## @param mariadb.primary.persistence.enabled Enable database persistence using PVC
+    ## @param mariadb.primary.persistence.storageClass MariaDB primary persistent volume storage Class
+    ## @param mariadb.primary.persistence.accessMode Persistent Volume access mode
+    ## @param mariadb.primary.persistence.size Database Persistent Volume Size
+    ## @param mariadb.primary.persistence.hostPath Set path in case you want to use local host path volumes (not recommended in production)
+    ## @param mariadb.primary.persistence.existingClaim Name of an existing `PersistentVolumeClaim` for MariaDB primary replicas
+    ##
+    persistence:
+      enabled: true
+      ## mariadb data Persistent Volume Storage Class
+      ## If defined, storageClassName: <storageClass>
+      ## If set to "-", storageClassName: "", which disables dynamic provisioning
+      ## If undefined (the default) or set to null, no storageClassName spec is
+      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+      ##   GKE, AWS & OpenStack)
+      ##
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 8Gi
+      hostPath: ""
+      existingClaim: ""
+    ## MariaDB primary container's resource requests and limits
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    ## @param mariadb.primary.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if primary.resources is set (primary.resources is recommended for production).
+    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+    ##
+    resourcesPreset: "large"
+    ## @param mariadb.primary.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+    ## Example:
+    ## resources:
+    ##   requests:
+    ##     cpu: 2
+    ##     memory: 512Mi
+    ##   limits:
+    ##     cpu: 3
+    ##     memory: 1024Mi
+    ##
+    resources: {}
+
+## Network Policy configuration
+## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+##
+networkPolicy:
+  ## @param networkPolicy.enabled Specifies whether a NetworkPolicy should be created
+  ##
+  enabled: true
+  ## @param networkPolicy.allowExternal Don't require server label for connections
+  ## The Policy model to apply. When set to false, only pods with the correct
+  ## server label will have network access to the ports server is listening
+  ## on. When true, server will accept connections from any source
+  ## (with the correct destination port).
+  ##
+  allowExternal: true
+  ## @param networkPolicy.allowExternalEgress Allow the pod to access any range of port and all destinations.
+  ##
+  allowExternalEgress: true
+  ## @param networkPolicy.extraIngress [array] Add extra ingress rules to the NetworkPolicy
+  ## e.g:
+  ## extraIngress:
+  ##   - ports:
+  ##       - port: 1234
+  ##     from:
+  ##       - podSelector:
+  ##           - matchLabels:
+  ##               - role: frontend
+  ##       - podSelector:
+  ##           - matchExpressions:
+  ##               - key: role
+  ##                 operator: In
+  ##                 values:
+  ##                   - frontend
+  extraIngress: []
+  ## @param networkPolicy.extraEgress [array] Add extra ingress rules to the NetworkPolicy
+  ## e.g:
+  ## extraEgress:
+  ##   - ports:
+  ##       - port: 1234
+  ##     to:
+  ##       - podSelector:
+  ##           - matchLabels:
+  ##               - role: frontend
+  ##       - podSelector:
+  ##           - matchExpressions:
+  ##               - key: role
+  ##                 operator: In
+  ##                 values:
+  ##                   - frontend
+  ##
+  extraEgress: []
+  ## @param networkPolicy.ingressNSMatchLabels [object] Labels to match to allow traffic from other namespaces
+  ## @param networkPolicy.ingressNSPodMatchLabels [object] Pod labels to match to allow traffic from other namespaces
+  ##
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}

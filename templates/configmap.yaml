@@ -1,0 +1,9 @@
+# templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ca3s-helm.fullname" . }}
+  labels:
+    {{- include "ca3s-helm.labels" . | nindent 4 }}
+data:
+  {{- toYaml .Values.properties | nindent 4 }}
