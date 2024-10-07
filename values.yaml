@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   registry: docker.io
-  repository: kuehnetrustablede/ca3s
+  repository: ca3s/ca3s
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -204,26 +204,64 @@ ingress:
   extraRules: []
 
 
-resources: {}
+resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 1
-  #   memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 4096Mi
+  requests:
+    cpu: 1
+    memory: 2048Mi
 
+## @param startupProbe.enabled Enable/disable startupProbe
+## @param startupProbe.initialDelaySeconds Delay before startup probe is initiated
+## @param startupProbe.periodSeconds How often to perform the probe
+## @param startupProbe.timeoutSeconds When the probe times out
+## @param startupProbe.failureThreshold Minimum consecutive failures for the probe
+## @param startupProbe.successThreshold Minimum consecutive successes for the probe
+##
+startupProbe:
+  enabled: false
+  initialDelaySeconds: 500
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## EJBCA pod extra options for liveness probe
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+## @param livenessProbe.enabled Enable/disable livenessProbe
+## @param livenessProbe.initialDelaySeconds Delay before liveness probe is initiated
+## @param livenessProbe.periodSeconds How often to perform the probe
+## @param livenessProbe.timeoutSeconds When the probe times out
+## @param livenessProbe.failureThreshold Minimum consecutive failures for the probe
+## @param livenessProbe.successThreshold Minimum consecutive successes for the probe
+##
 livenessProbe:
-  httpGet:
-    path: /
-    port: http
+  enabled: false
+  initialDelaySeconds: 500
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## EJBCA pod extra options for readiness probe
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+## @param readinessProbe.enabled Enable/disable readinessProbe
+## @param readinessProbe.initialDelaySeconds Delay before readiness probe is initiated
+## @param readinessProbe.periodSeconds How often to perform the probe
+## @param readinessProbe.timeoutSeconds When the probe times out
+## @param readinessProbe.failureThreshold Minimum consecutive failures for the probe
+## @param readinessProbe.successThreshold Minimum consecutive successes for the probe
+##
 readinessProbe:
-  httpGet:
-    path: /
-    port: http
+  enabled: true
+  initialDelaySeconds: 500
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
 
 autoscaling:
   enabled: false
@@ -251,7 +289,26 @@ tolerations: []
 
 affinity: {}
 
+secrets:
+  SPRING_DATASOURCE_PASSWORD: "s3cr3t"
+  SPRING_LIQUIBASE_PASSWORD: "MLQ738PdLpio"
+
+  JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: "Mjk3NjM4OWI4NWU3ZjE3NjQ3OWRiZjI3OWYwYmZiNWY1NzA2YjAzZTY2ODJhNWM5MjFjYzZmZTZlMDE4YWRhNDg0MjJlNDYzNThhODBjNmU0ZGFjMGY3MTc5OTVlNmEyZWFiZmIwMDIxYTExYzkxNGM3YmM2YmVmMmNlZWE2YmQ="
+
+  # provide a random password for the derivation of an encryption key to encrypt sensitive data in the database.
+  # If this value is lost the content of the related database instance becomes useless. There is no way to recover this key.
+  # !!! Make sure this configuration file is readable for the application / administrators ONLY !!!
+  CA3S_PROTECTIONSECRET: "bnJvbGwvV1MtMjAxOS1DQS5jcmyGK2h0dHA6Ly90cnVzdGFibGUuZXUvYWRjc1Rl"
+
+  CA3S_AUTH_API_KEY_AUTH_TOKEN_ADMIN: "gTYvGKIfzLpWQSSIMT1XBaRfzdSLZmvFMNlfo6zeddYyg3FYmq7BH6qqB4dy75uYbLb0KXOU7jV50a360R4CB4UXriX085usWJnto5CMpOu34rxx0b5v2Xd97hpzDQdJ"
+
+
+
 properties:
+  JAVA_OPTS: "-Xmx2048m"
+
+  SPRING_PROFILES_ACTIVE: "prod"
+
   LOGBACK_ACCESS_ENABLED: "false"
 
   # define the logging level
@@ -289,7 +346,6 @@ properties:
 #  SPRING_DATASOURCE_URL: "jdbc:mysql://10.0.1.1:3306/test_schema?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
   SPRING_DATASOURCE_URL: "jdbc:mysql://ca3s-bn-mariadb.default.svc.cluster.local:3306/ca3s_db?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
   SPRING_DATASOURCE_USERNAME: "ca3s_user"
-  SPRING_DATASOURCE_PASSWORD: "s3cr3t"
   SPRING_DATASOURCE_HIKARI_POOLNAME: "Hikari"
   SPRING_DATASOURCE_HIKARI_AUTO-COMMIT: "false"
   SPRING_DATASOURCE_HIKARI_DATA-SOURCE-PROPERTIES_CACHEPREPSTMTS: "true"
@@ -307,7 +363,6 @@ properties:
   SPRING_JPA_PROPERTIES_HIBERNATE_SESSION_EVENTS_LOG_LOG_QUERIES_SLOWER_THAN_MS: "250"
   SPRING_LIQUIBASE_CONTEXTS: "prod"
   SPRING_LIQUIBASE_USER: "ca3s_lb_user"
-  SPRING_LIQUIBASE_PASSWORD: "MLQ738PdLpio"
   SPRING_MVC_PATHMATCH_MATCHING-STRATEGY: "ant_path_matcher"
   SPRING_MAIN_ALLOW-BEAN-DEFINITION-OVERRIDING: "true"
   SPRING_MAIN_ALLOW-CIRCULAR-REFERENCES: "true"
@@ -328,7 +383,6 @@ properties:
   JHIPSTER_CACHE_EHCACHE_MAX-ENTRIES: "1000"
 
   # The web session uses JSON Web Token for authentication. Define the protection parameter here
-  JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64-SECRET: "Mjk3NjM4OWI4NWU3ZjE3NjQ3OWRiZjI3OWYwYmZiNWY1NzA2YjAzZTY2ODJhNWM5MjFjYzZmZTZlMDE4YWRhNDg0MjJlNDYzNThhODBjNmU0ZGFjMGY3MTc5OTVlNmEyZWFiZmIwMDIxYTExYzkxNGM3YmM2YmVmMmNlZWE2YmQ="
   JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN-VALIDITY-IN-SECONDS: "86400"
   JHIPSTER_SECURITY_AUTHENTICATION_JWT_TOKEN-VALIDITY-IN-SECONDS-FOR-REMEMBER-ME: "2592000"
 
@@ -384,7 +438,7 @@ properties:
   CA3S_UI_SSO_PROVIDER: "saml"
 
   # Configure service to port / protocol binding.
-  # The default port is 8442
+  # The default port is 8443
   # The default binding host is 0.0.0.0
   # The use of https is default
   # Overwrite any of the settings if required
@@ -394,16 +448,16 @@ properties:
   CA3S_SCEPACCESS_HTTPS: "false"
 
   # Define the ACME access port. HTTPS is mandatory by RFC 8555
-  CA3S_ACMEACCESS_PORT: "8442"
+  CA3S_ACMEACCESS_PORT: "8443"
 
   # Define the access port for 'normal' user'. HTTPS is strongly recommended
-  CA3S_TLSACCESS_PORT: "8442"
+  CA3S_TLSACCESS_PORT: "8443"
 
   # Define the access port for ra officer. HTTPS is strongly recommended
-  CA3S_RAACCESS_PORT: "8442"
+  CA3S_RAACCESS_PORT: "8443"
 
   # Define the access port for administrator. HTTPS is strongly recommended. Probably admin access will be limited to a specific subnet
-  CA3S_ADMINACCESS_PORT: "8442"
+  CA3S_ADMINACCESS_PORT: "8443"
   CA3S_ADMINACCESS_BINDINGHOST: "192.168.32.0"
   CA3S_ACME_FINALIZELOCATIONBACKWARDCOMPAT: "true"
   CA3S_ACME_RATELIMIT_SECOND: "0"
@@ -429,11 +483,6 @@ properties:
   # ca3s requests the SCEP recipeint certificate automatically. Define the details of the certificate
   CA3S_SCEP_RECIPIENT_CERTIFICATE_CNSUFFIX: ".trustable.de"
 
-  # provide a random password for the derivation of an encryption key to encrypt sensitive data in the database.
-  # If this value is lost the content of the related database instance becomes useless. There is no way to recover this key.
-  # !!! Make sure this configuration file is readable for the application / administrators ONLY !!!
-  CA3S_PROTECTIONSECRET: "bnJvbGwvV1MtMjAxOS1DQS5jcmyGK2h0dHA6Ly90cnVzdGFibGUuZXUvYWRjc1Rl"
-
   # define some key derivation parameter wihich are applied to derive a key from the given protectionSecret
   CA3S_CONNECTION_SALT: "ca3sSalt"
   CA3S_CONNECTION_ITERATIONS: "4567"
@@ -444,7 +493,6 @@ properties:
   # Define a (default) API key to access the REST endpoints, especially during automatic setup
   CA3S_AUTH_API-KEY_ENABLED: "true"
   CA3S_AUTH_API-KEY_AUTH-TOKEN-HEADER-NAME: "X-API-KEY"
-  CA3S_AUTH_API-KEY_AUTH-TOKEN-ADMIN: "gTYvGKIfzLpWQSSIMT1XBaRfzdSLZmvFMNlfo6zeddYyg3FYmq7BH6qqB4dy75uYbLb0KXOU7jV50a360R4CB4UXriX085usWJnto5CMpOu34rxx0b5v2Xd97hpzDQdJ"
 
   # Section for kerberos / AD authentication
   CA3S_AUTH_KERBEROS_SERVICE-PRINCIPAL: "HTTP/admin@ci-adcs"
